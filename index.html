@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>DynamoDB and Cassandra - Presentation for KhmelnytskyiPy #1</title>
+
+		<meta name="description" content="DynamoDB and Cassandra: usage specifics comparatively to classic relational databases, best practices">
+		<meta name="author" content="Oleksandr Polieno">
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/black.css" id="theme">
+
+		<!-- Code syntax highlighting -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides">
+				<section>
+					<h1 style="text-transform: initial;">DynamoDB<br>and<br>Cassandra</h1>
+				</section>
+
+				<section>
+					<table>
+						<tr>
+							<td><a href="http://aws.amazon.com/documentation/dynamodb/" target="_blank">Amazon DynamoDB</a></td>
+							<td><a href="http://cassandra.apache.org/">Apache Cassandra</a></td>
+						</tr>
+						<tr class="fragment">
+							<td colspan="2">Disaributed</td>
+						</tr>
+						<tr class="fragment">
+							<td colspan="2">Key/value (+columns) storage</td>
+						</tr>
+						<tr class="fragment">
+							<td>DaaS</td>
+							<td>Open source</td>
+						</tr>
+						<tr class="fragment">
+							<td>Managed by AWS</td>
+							<td>Requires DevOps</td>
+						</tr>
+						<tr class="fragment">
+							<td colspan="2">Scalability, high availability</td>
+						</tr>
+						<tr class="fragment">
+							<td><300ms response (99.9%)</td>
+							<td>Fatest writes</td>
+						</tr>
+						<tr class="fragment">
+							<td>boto, pynamodb</td>
+							<td>python cassandra driver</td>
+						</tr>
+					</table>
+				</section>
+
+				<section>
+					<h2 style="text-transform: initial;">Roadmap</h2>
+					<ol>
+						<li>DynamoDB and Cassandra under the hood</li>
+						<li class="fragment">DynamoDB and Cassandra in action</li>
+						<li class="fragment">Conclusions</li>
+					</ol>
+				</section>
+
+				<section>
+					<h2 style="text-transform: initial;">1. DynamoDB and Cassandra under the hood</h2>
+				</section>
+
+				<section>
+					<h3 style="text-transform: initial;">1.1. Primary keys</h3>
+					<ul>
+						<li class="fragment">Hash and Range keys</li>
+    					<li class="fragment">Unique (incremental, natural, UUID)</li>
+    					<li class="fragment">Query vs Scan</li>
+    					<li class="fragment">Iteration through table</li>
+    					<li class="fragment">Compaund aka composite keys</li>
+					</ul>
+				</section>
+
+				<section>
+					<h3 style="text-transform: initial;">1.2. Items count</h3>
+					<ul>
+						<li class="fragment">Query count</li>
+    					<li class="fragment">Implement it on the application side</li>
+					</ul>
+				</section>
+
+				<section>
+					<h3 style="text-transform: initial;">1.3. Secondary indexes</h3>
+					<ul>
+						<li class="fragment">Local / Global</li>
+    					<li class="fragment">One more table / more space required / heavier writes</li>
+    					<li class="fragment">Projections</li>
+    					<li class="fragment">Sparse, Low cardinality</li>
+    					<li class="fragment">Limitations</li>
+					</ul>
+				</section>
+
+				<section>
+					<h3 style="text-transform: initial;">1.4. Schema</h3>
+					<ul>
+						<li class="fragment">Primary keys</li>
+    					<li class="fragment">Indexes</li>
+    					<li class="fragment">Can't be changed after table creation</li>
+					</ul>
+				</section>
+
+				<section>
+					<h3 style="text-transform: initial;">1.5. Columns</h3>
+					<ul>
+						<li class="fragment">Item size 400 KB for DynamDB vs 2GGB for Cassandra</li>
+    					<li class="fragment">Keep item size small</li>
+    					<li class="fragment">Column types</li>
+    					<li class="fragment">Cassandra: Counters, list/map/set, TimeUUID, ascii vs varchar</li>
+					</ul>
+				</section>
+
+				<section>
+					<h3 style="text-transform: initial;">1.6. Eventual consistency</h3>
+					<ul>
+						<li class="fragment">ACID vs CAP (Consistency, Availability, Partition-tolerance)</li>
+    					<li class="fragment">Eventual consistency != inconsistency</li>
+    					<li class="fragment">Strong consistency is available</li>
+					</ul>
+				</section>
+
+				<section>
+					<h3 style="text-transform: initial;">1.7. Write, write, write or why Cassandra is fastest on writes</h3>
+					<ul>
+						<li class="fragment">Write on update and delete</li>
+     					<li class="fragment">Blind write</li>
+     					<li class="fragment">Conflicts (last write win)</li>
+     					<li class="fragment">Compaction</li>
+					</ul>
+				</section>
+
+				<section>
+					<h3 style="text-transform: initial;">1.8. Normalization vs denormalization</h3>
+    				<p>Normalization:</p>
+					<ul class="fragment">
+						<li>Relations, joins, complex queries</li>
+    					<li>Constrains</li>
+    					<li>All data in one place</li>
+					</ul>
+					<p>Denormalization:</p>
+					<ul class="fragment">
+						<li>~endless capacity</li>
+    					<li>Smart indexes</li>
+    					<li>Static field as join replacement</li>
+    					<li>Fast write</li>
+    					<li>Value == null does not use disk space</li>
+					</ul>
+				</section>
+
+				<section>
+					<h3 style="text-transform: initial;">1.9. Availability</h3>
+					<ul>
+						<li class="fragment">Masterless architecture</li>
+    					<li class="fragment">Data duplication</li>
+    					<li class="fragment">Virtual nodes</li>
+    					<li class="fragment">replication between datatacenters</li>
+    					<li class="fragment">highly available for writes</li>
+					</ul>
+				</section>
+
+				<section>
+					<h3 style="text-transform: initial;">1.10. Databases</h3>
+					<ul>
+						<li class="fragment">DynamoDB: None, IAM service</li>
+    					<li class="fragment">Cassandra: Namespaces</li>
+					</ul>
+				</section>
+
+				<section>
+					<h3 style="text-transform: initial;">1.11. Users, authorization</h3>
+					<ul>
+						<li>DynamoDB: IAM service (per table, get/modification)</li>
+    					<li class="fragment">Cassandra: Users and roles (select/modify)</li>
+					</ul>
+				</section>
+
+				<section>
+					<h3 style="text-transform: initial;">1.12. Interface</h3>
+					<ul>
+						<li>DynamoDB: REST API + Client library
+							<pre><code>PutItem:
+{
+    "TableName": "users",
+    "Item": {
+        "user_id": {
+            "N": "123",
+        },
+        "username": {
+            "S": "ryuko",
+        }
+    }
+}</code></pre>
+						</li>
+    					<li class="fragment">Cassandra: Cassandra driver + CQL
+    					<pre><code>USE application_namespace;
+INSERT INTO users(user_id, username) VALUES (123, 'ryuko');</code></pre>
+    					</li>
+					</ul>
+				</section>
+
+				<section>
+					<h2 style="text-transform: initial;">2. DynamoDB and Cassandra in action</h2>
+				</section>
+
+				<section>
+					<section>
+						<h3 style="text-transform: initial;">2.1. DynamoDB prices</h3>
+						<table>
+							<tr>
+								<td>Provisioned throughput</td>
+								<td>Price per month</td>
+								<td>Price per hour</td>
+							</tr>
+							<tr>
+								<td>100 Write Capacity Units</td>
+								<td>$150</td>
+								<td>$0.0128</td>
+							</tr>
+							<tr>
+								<td>100 Read Capacity Units</td>
+								<td>$30</td>
+								<td>$0.0025</td>
+							</tr>
+						</table>
+						<p>
+							Read throughput 1 == one read request with response up to 4KB, per second.<br>
+							Write throughput 1 == one write request with body size up to 1KB, per second.
+						</p>
+						<small>* strong consitent reads cost twice more.</small>
+						<small>* prices depends on region.</small>
+					</section>
+					<section>
+						<h3 style="text-transform: initial;">2.1. DynamoDB prices</h3>
+						<table>
+							<tr>
+								<td>Data storage</td>
+								<td>Price per month per GB</td>
+							</tr>
+							<tr>
+								<td>First 25 GB</td>
+								<td>$0.000</td>
+							</tr>
+							<tr>
+								<td>> 25 GB</td>
+								<td>$0.25</td>
+							</tr>
+						</table>
+					</section>
+					<section>
+						<h3 style="text-transform: initial;">2.1. DynamoDB prices</h3>
+						<table>
+							<tr>
+								<td>Data transfer per month</td>
+								<td>Price per GB</td>
+							</tr>
+							<tr>
+								<td>First 1 GB</td>
+								<td>$0.000</td>
+							</tr>
+							<tr>
+								<td>Up to 10 TB</td>
+								<td>$0.090</td>
+							</tr>
+							<tr>
+								<td>Next 40 TB</td>
+								<td>$0.085</td>
+							</tr>
+							<tr>
+								<td colspan="2">...</td>
+							</tr>
+						</table>
+					</section>
+				</section>
+				<section>
+					<h3 style="text-transform: initial;">2.2. Integration with other Amazon web services</h3>
+					<ul>
+						<li>S3</li>
+						<li>Lambda</li>
+						<li>CloudSearch</li>
+						<li>...</li>
+					</ul>
+				</section>
+				<section>
+					<h3 style="text-transform: initial;">2.3. Python libs</h3>
+					<ul>
+						<li>boto</li>
+						<li>botocore</li>
+						<li>pynamodb</li>
+					</ul>
+				</section>
+				<section>
+					<h3 style="text-transform: initial;">2.4. Best practices</h3>
+					<ul>
+						<li>Queue for writes</li>
+						<li>Read retries and automatic throughput update</li>
+						<li>Gunicorn / Celery gevent/eventlet workers</li>
+						<li>Hot spots / throttled reads/writes / caching</li>
+					</ul>
+				</section>
+				<section>
+					<section>
+						<h3 style="text-transform: initial;">2.5. Testing DynamoDB</h3>
+						<p>
+							DynamoDBLocal:
+							<pre><code>java -Djava.library.path=./bin/DynamoDBLocal_lib \
+	-jar ./bin/DynamoDBLocal.jar -port 8010 -inMemory \
+	# -dbPath ./bin/db.bin</code></pre>
+						</p>
+					</section>
+					<section>
+						<h3 style="text-transform: initial;">2.5. Testing DynamoDB</h3>
+						<p>
+							<pre><code>DDB_LOCAL_URL = 'http://localhost:8010'
+
+
+class DDBUserWalletTestCase(unittest.TestCase):
+
+    @mock.patch('app.DDBUserWallet._get_endpoint_url')
+    def test_update_and_get(self, _get_endpoint_url_mock):
+        _get_endpoint_url_mock.return_value = DDB_LOCAL_URL
+        user_wallet = DDBUserWallet()
+        user_wallet.create_table()
+        user_id = uuid.uuid4()
+        for balance in [100, 123]:
+            user_wallet.update(
+            	user_id=user_id, balance=balance)
+            self.assertEqual(
+            	user_wallet.get(user_id=user_id)['balance'], balance)</code></pre>
+						</p>
+					</section>
+				</section>
+
+				<section>
+					<section>
+						<h3 style="text-transform: initial;">2.6. Testing Cassandra</h3>
+						<p>
+							<pre><code>brew / apt-get install cassandra</code></pre>
+						</p>
+					</section>
+					<section>
+						<h3 style="text-transform: initial;">2.6. Testing Cassandra</h3>
+						<p>
+							django-cassandra-engine:
+							<pre><code>from django_cassandra_engine.test import TestCase
+
+from ..models import CassandraFeed
+
+
+class ModelsTestCase(TestCase):
+
+    def test_cassandra_feed(self):
+        actor_id = uuid.uuid4()
+        activity_id = uuid.uuid1()
+        activity = CassandraFeed(
+            actor_id=actor_id,
+            space='my',
+            activity_id=activity_id,
+        )
+        activity.save()
+        self.assertIn(unicode(activity_id), unicode(activity))
+        ...</code></pre>
+						</p>
+					</section>
+				</section>
+
+				<section>
+					<h2 style="text-transform: initial;">3. Conclusions</h2>
+				</section>
+
+				<section>
+					<h3 style="text-transform: initial;">3.1. Use or not? Decision tree</h3>
+					<ul>
+						<li class="fragment">amout of data?</li>
+						<li class="fragment">database life circle?</li>
+						<li class="fragment">who will manage the cluster?</li>
+						<li class="fragment">data flow (constant or not)?</li>
+						<li class="fragment">AWS "addiction"?</li>
+						<li class="fragment">features</li>
+					</ul>
+				</section>
+
+				<section>
+					<h3 style="text-transform: initial;">3.2. Best suited for</h3>
+					<ul>
+						<li class="fragment">Shopping cart</li>
+						<li class="fragment">Feeds: Activities</li>
+						<li class="fragment">Analytics</li>
+						<li class="fragment">Toys store (predictable load)</li>
+						<li class="fragment">Voting engine</li>
+						<li class="fragment">Suggesters</li>
+					</ul>
+				</section>
+
+				<section>
+					<h2 style="text-transform: initial;">Resources for Amazon DynamoDB</h2>
+					<ul>
+						<li><a href="http://s3.amazonaws.com/AllThingsDistributed/sosp/amazon-dynamo-sosp2007.pdf" target="_blank">Dynamo: Amazon’s Highly Available Key-value Store</a></li>
+						<li><a href="http://aws.amazon.com/documentation/dynamodb/" target="_blank">Amazon DynamoDB Documentation</a></li>
+						<li><a href="http://www.amazon.com/Mastering-DynamoDB-Tanmay-Deshpande-ebook/dp/B00N1X691W/">Mastering DynamoDB</a> by Tanmay Deshpande</li>
+						<li><a href="http://www.amazon.com/DynamoDB-Applied-Design-Patterns-Uchit-ebook/dp/B00NVDAWSS/">DynamoDB Applied Design Patterns</a> by Uchit Vyas</li>
+					</ul>
+				</section>
+
+				<section>
+					<h2 style="text-transform: initial;">Resources for Apache Cassandra</h2>
+					<ul>
+						<li><a href="http://www.planetcassandra.org/blog/interview/facebooks-instagram-making-the-switch-to-cassandra-from-redis-a-75-insta-savings/" target="_blank">Facebook’s Instagram: Making the Switch to Cassandra from Redis, a 75% ‘Insta’ Savings</a></li>
+						<li><a href="http://www.datastax.com/blog" target="_blank">DatasStax blog</a></li>
+						<li><a href="http://www.amazon.com/Learning-Apache-Cassandra-Fault-Tolerant-Real-Time-ebook/dp/B00U1D9WSC/" target="_blank">Learning Apache Cassandra</a> by Mat Brown</li>
+					</ul>
+				</section>
+
+				<section>
+					<h3 style="text-transform: initial;">Thank You!</h3>
+				</section>
+
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+
+			// Full list of configuration options available at:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+
+				transition: 'slide', // none/fade/slide/convex/concave/zoom
+
+				// Optional reveal.js plugins
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, condition: function() { return !!document.querySelector( 'pre code' ); }, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true },
+					{ src: 'plugin/notes/notes.js', async: true }
+				]
+			});
+
+		</script>
+
+	</body>
+</html>
